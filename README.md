@@ -1,2 +1,1 @@
-# job-matching-recommendation-system
 AI-powered job matching engine using collaborative filtering and NLP to match candidate profiles with job descriptions. Built with Python, Flask, and Scikit-learn. Awarded Best Project of the Semester — INTI International University, 2026.
