@@ -92,7 +92,7 @@ See [docs/TECHNICAL_GUIDE.md](docs/TECHNICAL_GUIDE.md) for the full pipeline, sc
 ## Team
 
 - **Zakaria Hibaoui** — [@ZakariaHibaoui2](https://github.com/ZakariaHibaoui2)
-- **Abdul Kuddoos Yahya** — [@yahya-n](https://github.com/yahya-n)
+- [@yahya-n](https://github.com/yahya-n)
 
 Built for the Machine Learning course at INTI International University, Malaysia (2026).
 
