@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>JobMatch AI — ML Job Recommender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════ TOKENS ════════════════════════════ */
+    :root {
+      /* surfaces - deep slate / navy */
+      --bg: #0f172a;
+      --s1: #1e293b;
+      --s2: #334155;
+      --s3: #475569;
+      --s4: #64748b;
+      /* borders */
+      --bd: rgba(255, 255, 255, .08);
+      --bd2: rgba(255, 255, 255, .15);
+      /* brand — Sky Blue (Hard) + Pink (Soft) */
+      --c-hard: #0ea5e9;
+      --c-hard2: #38bdf8;
+      --c-hard-dim: rgba(14, 165, 233, .15);
+      --c-soft: #ec4899;
+      --c-soft2: #f472b6;
+      --c-soft-dim: rgba(236, 72, 153, .15);
+      /* semantic */
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #f43f5e;
+      --text: #f8fafc;
+      --sub: #cbd5e1;
+      --dim: #64748b;
+      /* glow */
+      --gh: rgba(14, 165, 233, .18);
+      --gs: rgba(236, 72, 153, .18);
+      /* ui */
+      --ease: cubic-bezier(.4, 0, .2, 1);
+      --touch: 44px;
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 16px;
+      --r-xl: 20px;
+      --sidebar-w: 360px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth;
+      color-scheme: dark;
+      -webkit-text-size-adjust: 100%
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 130% 60% at 0% 0%, rgba(14, 165, 233, .08), transparent 50%),
+        radial-gradient(ellipse 90% 55% at 100% 100%, rgba(236, 72, 153, .08), transparent 50%),
+        radial-gradient(ellipse 70% 40% at 50% 50%, rgba(139, 92, 246, .03), transparent 60%);
+    }
+
+    img,
+    svg {
+      display: block
+    }
+
+    button,
+    input {
+      font-family: inherit
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--s4);
+      border-radius: 2px
+    }
+
+    /* ═══════════════════════ LOADING OVERLAY ══════════════════════ */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 9000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 24px;
+      transition: opacity .6s var(--ease);
+    }
+
+    #overlay.bye {
+      opacity: 0;
+      pointer-events: none
+    }
+
+    .ov-icon {
+      font-size: clamp(44px, 10vw, 60px);
+      animation: bob 2s ease infinite
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    .ov-title {
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: 800;
+      letter-spacing: -.5px;
+      background: linear-gradient(130deg, #f8fafc 20%, var(--c-hard) 55%, var(--c-soft));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ov-track {
+      width: min(260px, 80vw);
+      height: 3px;
+      background: var(--s3);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .ov-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--c-hard), var(--c-soft));
+      transition: width .45s var(--ease);
+    }
+
+    .ov-msg {
+      font-size: 12px;
+      color: var(--sub);
+      text-align: center;
+      max-width: 280px;
+      min-height: 18px
+    }
+
+    .ov-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      background: var(--s1);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-lg);
+      padding: 14px 18px;
+      width: min(320px, 90vw);
+    }
+
+    .ov-step {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      color: var(--dim);
+      transition: color .3s
+    }
+
+    .ov-step .ico {
+      width: 16px;
+      text-align: center;
+      font-size: 13px;
+      flex-shrink: 0
+    }
+
+    .ov-step.done {
+      color: var(--c-hard2)
+    }
+
+    .ov-step.active {
+      color: var(--text)
+    }
+
+    .ov-ok {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: rgba(14, 165, 233, .1);
+      border: 1px solid rgba(14, 165, 233, .25);
+      color: var(--c-hard2);
+      border-radius: var(--r-sm);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .ov-ok.show {
+      display: inline-flex
+    }
+
+    /* ═══════════════════════════ HEADER ═══════════════════════════ */
+    .page {
+      position: relative;
+      z-index: 1
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 500;
+      border-bottom: 1px solid var(--bd);
+      background: rgba(15, 23, 42, .88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      padding: 11px 0;
+    }
+
+    .hd {
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+    }
+
+    .logo-name {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -.3px;
+      white-space: nowrap
+    }
+
+    .logo-name em {
+      background: linear-gradient(90deg, var(--c-hard2), var(--c-soft2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-style: normal
+    }
+
+    .hd-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      padding: 5px 10px;
+      border-radius: var(--r-sm);
+      font-size: 11px;
+      color: var(--sub);
+      white-space: nowrap;
+    }
+
+    .sdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      flex-shrink: 0;
+      transition: background .3s, box-shadow .3s
+    }
+
+    .sdot.live {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green)
+    }
+
+    .acc-pill {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, .1);
+      border: 1px solid rgba(16, 185, 129, .2);
+      padding: 5px 10px;
+      border-radius: var(--r-sm);
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .acc-pill.show {
+      display: flex
+    }
+
+    .kpi-row {
+      display: none;
+      gap: 14px
+    }
+
+    .kpi {
+      text-align: center
+    }
+
+    .kpi-n {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--c-hard2);
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.2
+    }
+
+    .kpi-l {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--sub)
+    }
+
+    /* ═══════════════════════════ LAYOUT ═══════════════════════════ */
+    .wrap {
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 0 20px
+    }
+
+    .hero {
+      padding: 28px 0 20px
+    }
+
+    .hero h1 {
+      font-size: clamp(22px, 5.5vw, 44px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.5px;
+      margin-bottom: 10px;
+      background: linear-gradient(130deg, #f8fafc 25%, var(--c-hard2) 55%, var(--c-soft2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: clamp(13px, 3vw, 15px);
+      color: var(--sub);
+      max-width: 500px;
+      line-height: 1.7
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px
+    }
+
+    .info-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    .info-pill.brand {
+      background: var(--c-hard-dim);
+      border-color: rgba(14, 165, 233, .22);
+      color: var(--c-hard2)
+    }
+
+    /* two-col on desktop */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px
+    }
+
+    /* ═══════════════════ DRAWER BACKDROP (mobile) ═════════════════ */
+    .bd-drop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      z-index: 800;
+      backdrop-filter: blur(3px)
+    }
+
+    .bd-drop.open {
+      display: block
+    }
+
+    /* ═══════════════════ SIDEBAR / PANEL ══════════════════════════ */
+    .panel {
+      background: var(--s1);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-xl);
+      padding: 20px;
+      /* mobile: bottom sheet */
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 900;
+      border-radius: var(--r-xl) var(--r-xl) 0 0;
+      transform: translateY(100%);
+      transition: transform .32s var(--ease);
+      max-height: 90vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+
+    .panel.open {
+      transform: translateY(0)
+    }
+
+    .drag-bar {
+      width: 36px;
+      height: 4px;
+      background: var(--bd2);
+      border-radius: 2px;
+      margin: 0 auto 16px
+    }
+
+    /* panel header */
+    .panel-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+    }
+
+    .panel-close {
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      color: var(--sub);
+      font-size: 16px;
+      cursor: pointer;
+      width: var(--touch);
+      height: var(--touch);
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ═════════════════ SKILL SELECTION (improved) ═════════════════ */
+
+    /* Tab switcher: Hard / Soft */
+    .skill-tabs {
+      display: flex;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 14px;
+    }
+
+    .skill-tab {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: none;
+      color: var(--sub);
+      transition: background .18s, color .18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+      min-height: var(--touch);
+    }
+
+    .skill-tab.active-hard {
+      background: var(--c-hard-dim);
+      color: var(--c-hard2)
+    }
+
+    .skill-tab.active-soft {
+      background: var(--c-soft-dim);
+      color: var(--c-soft2)
+    }
+
+    .skill-tab .tab-count {
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--s3);
+      color: var(--sub);
+      transition: background .18s, color .18s;
+    }
+
+    .skill-tab.active-hard .tab-count {
+      background: rgba(14, 165, 233, .25);
+      color: var(--c-hard2)
+    }
+
+    .skill-tab.active-soft .tab-count {
+      background: rgba(236, 72, 153, .2);
+      color: var(--c-soft2)
+    }
+
+    /* skill pane */
+    .skill-pane {
+      display: none
+    }
+
+    .skill-pane.active {
+      display: block
+    }
+
+    /* search input inside skill pane */
+    .skill-search-wrap {
+      position: relative;
+      margin-bottom: 10px
+    }
+
+    .skill-search-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      pointer-events: none;
+    }
+
+    .skill-search-icon-hard .skill-search-wrap svg path {
+      stroke: var(--c-hard)
+    }
+
+    .skill-search-icon-soft .skill-search-wrap svg path {
+      stroke: var(--c-soft)
+    }
+
+    .sk-inp {
+      width: 100%;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      padding: 11px 11px 11px 36px;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      -webkit-appearance: none;
+    }
+
+    .sk-inp:focus {
+      border-color: var(--c-hard);
+      box-shadow: 0 0 0 3px var(--gh)
+    }
+
+    .sk-inp.soft:focus {
+      border-color: var(--c-soft);
+      box-shadow: 0 0 0 3px var(--gs)
+    }
+
+    .sk-inp::placeholder {
+      color: var(--dim)
+    }
+
+    /* autocomplete dropdown */
+    .ac-drop {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      right: 0;
+      background: var(--s2);
+      border: 1px solid var(--bd2);
+      border-radius: var(--r-md);
+      z-index: 600;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, .6);
+      overflow: hidden;
+      display: none;
+    }
+
+    .ac-drop.open {
+      display: block
+    }
+
+    .ac-row {
+      padding: 11px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--sub);
+      transition: background .12s, color .12s;
+      min-height: var(--touch);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ac-row:hover,
+    .ac-row.hi {
+      background: var(--gh);
+      color: var(--c-hard2)
+    }
+
+    .ac-row.soft-row:hover,
+    .ac-row.soft-row.hi {
+      background: var(--gs);
+      color: var(--c-soft2)
+    }
+
+    .ac-row b {
+      font-weight: 600;
+      color: inherit
+    }
+
+    .ac-row .ac-icon {
+      font-size: 12px;
+      flex-shrink: 0
+    }
+
+    /* selected tags */
+    .tag-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 28px
+    }
+
+    .stag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      animation: tagpop .15s var(--ease);
+      overflow: hidden;
+    }
+
+    @keyframes tagpop {
+      from {
+        opacity: 0;
+        transform: scale(.8)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    .stag.hard {
+      background: rgba(14, 165, 233, .14);
+      border: 1px solid rgba(14, 165, 233, .28);
+      color: var(--c-hard2)
+    }
+
+    .stag.soft {
+      background: rgba(236, 72, 153, .12);
+      border: 1px solid rgba(236, 72, 153, .26);
+      color: var(--c-soft2)
+    }
+
+    .stag-label {
+      padding: 5px 10px 5px 12px
+    }
+
+    .stag-x {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 10px 5px 6px;
+      cursor: pointer;
+      opacity: .55;
+      font-size: 14px;
+      transition: opacity .12s, background .12s;
+      min-width: 32px;
+      height: 100%;
+    }
+
+    .stag-x:hover {
+      opacity: 1;
+      background: rgba(244, 63, 94, .2);
+      color: var(--red)
+    }
+
+    /* tag area header row */
+    .tags-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      min-height: 20px;
+    }
+
+    .tags-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--sub)
+    }
+
+    .clear-btn {
+      font-size: 10px;
+      color: var(--sub);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color .12s, background .12s;
+    }
+
+    .clear-btn:hover {
+      color: var(--red);
+      background: rgba(244, 63, 94, .1)
+    }
+
+    /* quick-add chips */
+    .quick-sec {
+      margin-top: 12px
+    }
+
+    .quick-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--dim);
+      margin-bottom: 7px
+    }
+
+    .quick-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px
+    }
+
+    .qchip {
+      font-size: 11px;
+      padding: 5px 11px;
+      min-height: 30px;
+      background: var(--s3);
+      border: 1px solid var(--bd);
+      color: var(--sub);
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all .14s;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+    }
+
+    .qchip:hover,
+    .qchip:active {
+      background: var(--c-hard-dim);
+      color: var(--c-hard2);
+      border-color: rgba(14, 165, 233, .3)
+    }
+
+    .qchip.soft:hover,
+    .qchip.soft:active {
+      background: var(--c-soft-dim);
+      color: var(--c-soft2);
+      border-color: rgba(236, 72, 153, .3)
+    }
+
+    .qchip.added {
+      opacity: .4;
+      cursor: default;
+      pointer-events: none
+    }
+
+    /* ═══════════════════ SEARCH OPTIONS (improved) ═════════════════ */
+    .search-opts {
+      margin-top: 16px
+    }
+
+    .opts-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--sub);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .opts-title::before {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--bd)
+    }
+
+    /* experience level — segmented control */
+    .exp-row {
+      margin-bottom: 14px
+    }
+
+    .exp-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sub);
+      margin-bottom: 7px;
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .seg-ctrl {
+      display: flex;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      padding: 3px;
+      gap: 3px
+    }
+
+    .seg-opt {
+      flex: 1;
+      padding: 7px 6px;
+      border: none;
+      border-radius: 8px;
+      background: none;
+      color: var(--sub);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background .17s, color .17s;
+      min-height: 34px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .seg-opt.sel {
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+      color: #f8fafc;
+      box-shadow: 0 2px 8px rgba(14, 165, 233, .3)
+    }
+
+    /* results count control */
+    .count-row {
+      margin-bottom: 14px
+    }
+
+    .count-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sub);
+      margin-bottom: 7px;
+      display: flex;
+      justify-content: space-between
+    }
+
+    .count-val {
+      color: var(--c-hard2);
+      font-family: 'JetBrains Mono', monospace
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 3px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--s3);
+      border-radius: 2px;
+      outline: none;
+      padding: 0;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+      cursor: pointer;
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 8px rgba(14, 165, 233, .4);
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+      cursor: pointer;
+      border: 2px solid var(--bg);
+    }
+
+    /* ══════════════════════ SEARCH BUTTON ═════════════════════════ */
+    .search-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--r-md);
+      margin-top: 6px;
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+      color: #f8fafc;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: .02em;
+      box-shadow: 0 4px 20px rgba(14, 165, 233, .3);
+      transition: opacity .17s, transform .17s, box-shadow .17s;
+      min-height: var(--touch);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .search-btn:hover:not(:disabled) {
+      opacity: .9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(14, 165, 233, .4)
+    }
+
+    .search-btn:active:not(:disabled) {
+      transform: translateY(0)
+    }
+
+    .search-btn:disabled {
+      opacity: .35;
+      cursor: not-allowed
+    }
+
+    /* model stats mini card */
+    .model-stats {
+      margin-top: 14px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      padding: 12px;
+      display: none;
+    }
+
+    .model-stats.show {
+      display: block
+    }
+
+    .ms-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px
+    }
+
+    .ms-item {
+      background: var(--s3);
+      border-radius: var(--r-sm);
+      padding: 10px 12px
+    }
+
+    .ms-val {
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--c-hard2);
+      line-height: 1.2
+    }
+
+    .ms-lbl {
+      font-size: 10px;
+      color: var(--sub);
+      margin-top: 1px
+    }
+
+    .ms-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      padding: 3px 0;
+      border-top: 1px solid var(--bd);
+      margin-top: 8px;
+      padding-top: 8px
+    }
+
+    .ms-key {
+      color: var(--sub)
+    }
+
+    .ms-v {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: var(--c-soft2);
+      font-size: 10px
+    }
+
+    /* ══════════════════ RESULTS SECTION ═══════════════════════════ */
+    .res-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--bd);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .res-hdr h2 {
+      font-size: 16px;
+      font-weight: 700
+    }
+
+    .res-pill {
+      font-size: 11px;
+      color: var(--sub);
+      background: var(--s1);
+      border: 1px solid var(--bd);
+      padding: 3px 11px;
+      border-radius: 100px;
+    }
+
+    /* sort bar */
+    .sort-bar {
+      display: none;
+      gap: 5px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 3px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .sort-bar::-webkit-scrollbar {
+      display: none
+    }
+
+    .sort-btn {
+      font-size: 11px;
+      padding: 7px 13px;
+      white-space: nowrap;
+      min-height: 34px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      color: var(--sub);
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: all .14s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .sort-btn.on {
+      background: var(--c-hard-dim);
+      border-color: rgba(14, 165, 233, .3);
+      color: var(--c-hard2)
+    }
+
+    /* empty state */
+    .empty {
+      text-align: center;
+      padding: 56px 20px;
+      color: var(--sub)
+    }
+
+    .empty .ico {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: .35
+    }
+
+    .empty h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px
+    }
+
+    .empty p {
+      font-size: 13px;
+      line-height: 1.6
+    }
+
+    /* ═══════════════════════ JOB CARDS ════════════════════════════ */
+    .jcard {
+      background: var(--s1);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-lg);
+      padding: 18px 20px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .17s, transform .17s, box-shadow .17s;
+      animation: slup .28s var(--ease) both;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    @keyframes slup {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* left accent bar */
+    .jcard::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--c-hard), var(--c-soft));
+      opacity: 0;
+      transition: opacity .17s;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .jcard:hover {
+      border-color: rgba(14, 165, 233, .3);
+      box-shadow: 0 6px 28px rgba(0, 0, 0, .4)
+    }
+
+    .jcard:hover::before {
+      opacity: 1
+    }
+
+    .jcard:active {
+      transform: scale(.995)
+    }
+
+    /* card rank ribbon */
+    .card-rank-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--sub);
+      letter-spacing: .1em;
+      background: var(--s3);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    /* top row */
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+      padding-right: 60px
+    }
+
+    .card-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .card-title {
+      font-size: clamp(14px, 3.5vw, 17px);
+      font-weight: 700;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px
+    }
+
+    /* category colour system - refined */
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+      letter-spacing: .03em;
+      white-space: nowrap;
+      border: 1px solid transparent
+    }
+
+    .badge-accounting {
+      background: rgba(234, 179, 8, .1);
+      color: #fde047;
+      border-color: rgba(234, 179, 8, .2)
+    }
+
+    .badge-administration {
+      background: rgba(168, 85, 247, .1);
+      color: #d8b4fe;
+      border-color: rgba(168, 85, 247, .2)
+    }
+
+    .badge-advertising {
+      background: rgba(236, 72, 153, .1);
+      color: #f9a8d4;
+      border-color: rgba(236, 72, 153, .2)
+    }
+
+    .badge-healthcare {
+      background: rgba(34, 197, 94, .1);
+      color: #86efac;
+      border-color: rgba(34, 197, 94, .2)
+    }
+
+    .badge-it {
+      background: rgba(56, 189, 248, .1);
+      color: #bae6fd;
+      border-color: rgba(56, 189, 248, .2)
+    }
+
+    .badge-marketing {
+      background: rgba(249, 115, 22, .1);
+      color: #fdba74;
+      border-color: rgba(249, 115, 22, .2)
+    }
+
+    .badge-recruitment {
+      background: rgba(6, 182, 212, .1);
+      color: #67e8f9;
+      border-color: rgba(6, 182, 212, .2)
+    }
+
+    .badge-retail {
+      background: rgba(239, 68, 68, .1);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, .2)
+    }
+
+    .badge-sales {
+      background: rgba(99, 102, 241, .1);
+      color: #c4b5fd;
+      border-color: rgba(99, 102, 241, .2)
+    }
+
+    .badge-sport {
+      background: rgba(132, 204, 22, .1);
+      color: #d9f99d;
+      border-color: rgba(132, 204, 22, .2)
+    }
+
+    .badge-telecomunication {
+      background: rgba(251, 191, 36, .1);
+      color: #fde68a;
+      border-color: rgba(251, 191, 36, .2)
+    }
+
+    .badge-default {
+      background: rgba(148, 163, 184, .1);
+      color: #cbd5e1;
+      border-color: rgba(148, 163, 184, .2)
+    }
+
+    /* score donut */
+    .score-donut {
+      position: absolute;
+      top: 14px;
+      right: 12px;
+      width: 56px;
+      height: 56px
+    }
+
+    .donut-svg {
+      transform: rotate(-90deg)
+    }
+
+    .d-bg {
+      fill: none;
+      stroke: var(--s3);
+      stroke-width: 5
+    }
+
+    .d-arc {
+      fill: none;
+      stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset .8s var(--ease)
+    }
+
+    .d-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center
+    }
+
+    .d-num {
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1
+    }
+
+    .d-sub {
+      font-size: 8px;
+      color: var(--sub);
+      margin-top: 1px
+    }
+
+    /* score breakdown row */
+    .score-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 11px
+    }
+
+    .sc-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-sm);
+      font-size: 11px;
+    }
+
+    .sc-chip .sl {
+      color: var(--sub);
+      font-size: 10px
+    }
+
+    .sc-chip .sv {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600
+    }
+
+    /* matched / missing chips */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 9px 0
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 100px
+    }
+
+    .chip-ok {
+      background: rgba(16, 185, 129, .1);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, .2)
+    }
+
+    .chip-miss {
+      background: rgba(244, 63, 94, .08);
+      color: var(--red);
+      border: 1px solid rgba(244, 63, 94, .15)
+    }
+
+    /* skill lists in card */
+    .card-skills {
+      display: flex;
+      gap: 10px;
+      margin: 8px 0;
+      flex-wrap: wrap
+    }
+
+    .skill-col {
+      flex: 1;
+      min-width: 130px
+    }
+
+    .skill-col-hd {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 5px
+    }
+
+    .skill-col-hd.h {
+      color: var(--c-hard2)
+    }
+
+    .skill-col-hd.s {
+      color: var(--c-soft2)
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px
+    }
+
+    .sk-pill {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      color: var(--sub);
+    }
+
+    /* match progress */
+    .match-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--bd);
+    }
+
+    .match-bar-wrap {
+      flex: 1
+    }
+
+    .match-bar-hd {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--sub);
+      margin-bottom: 4px
+    }
+
+    .match-bar {
+      height: 4px;
+      background: var(--s3);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .match-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .6s var(--ease)
+    }
+
+    .view-btn {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--c-hard2);
+      border: 1px solid rgba(14, 165, 233, .3);
+      background: transparent;
+      border-radius: var(--r-sm);
+      padding: 7px 13px;
+      min-height: 34px;
+      cursor: pointer;
+      transition: background .14s;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .view-btn:hover,
+    .view-btn:active {
+      background: var(--c-hard-dim)
+    }
+
+    /* ═══════════════════════ METRICS ══════════════════════════════ */
+    .metrics-sec {
+      margin-top: 44px;
+      padding-top: 28px;
+      border-top: 1px solid var(--bd);
+      display: none
+    }
+
+    .metrics-sec.show {
+      display: block
+    }
+
+    .metrics-hd {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .metrics-hd::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+      flex-shrink: 0
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px
+    }
+
+    .stat-card {
+      background: var(--s1);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      padding: 14px 16px
+    }
+
+    .stat-val {
+      font-size: clamp(18px, 4vw, 22px);
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 2px
+    }
+
+    .stat-lbl {
+      font-size: 11px;
+      color: var(--sub)
+    }
+
+    .stat-card.g .stat-val {
+      color: var(--c-soft2)
+    }
+
+    .stat-card.y .stat-val {
+      color: var(--c-hard2)
+    }
+
+    .stat-card.b .stat-val {
+      color: var(--green)
+    }
+
+    .stat-card.p .stat-val {
+      color: var(--amber)
+    }
+
+    .report-wrap {
+      background: var(--s1);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      overflow: hidden
+    }
+
+    .report-hd {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sub);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch
+    }
+
+    .rtable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 460px
+    }
+
+    .rtable th {
+      padding: 9px 14px;
+      text-align: left;
+      color: var(--sub);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      border-bottom: 1px solid var(--bd);
+      background: var(--s2);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      white-space: nowrap;
+    }
+
+    .rtable td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--bd);
+      color: var(--text);
+      white-space: nowrap
+    }
+
+    .rtable tr:last-child td {
+      border-bottom: none
+    }
+
+    .rtable tr:hover td {
+      background: var(--s2)
+    }
+
+    .bar-cell {
+      display: flex;
+      align-items: center;
+      gap: 7px
+    }
+
+    .mbar {
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--c-hard), var(--c-soft));
+      flex-shrink: 0
+    }
+
+    /* ════════════════════════ MODAL ═══════════════════════════════ */
+    .mbg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 3000;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .mbg.open {
+      display: flex
+    }
+
+    .modal {
+      background: var(--s1);
+      border: 1px solid var(--bd2);
+      border-radius: var(--r-xl) var(--r-xl) 0 0;
+      padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: mup .24s var(--ease);
+      overscroll-behavior: contain;
+    }
+
+    @keyframes mup {
+      from {
+        opacity: 0;
+        transform: translateY(24px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .m-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--bd2);
+      border-radius: 2px;
+      margin: 0 auto 16px
+    }
+
+    .m-hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px
+    }
+
+    .m-title {
+      font-size: clamp(18px, 5vw, 22px);
+      font-weight: 800;
+      margin-bottom: 5px
+    }
+
+    .m-close {
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      color: var(--sub);
+      font-size: 18px;
+      cursor: pointer;
+      width: var(--touch);
+      height: var(--touch);
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .m-close:hover {
+      color: var(--text)
+    }
+
+    .m-sec {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--sub);
+      margin: 14px 0 8px
+    }
+
+    .m-scores-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 4px
+    }
+
+    .m-score-box {
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      padding: 12px;
+      text-align: center
+    }
+
+    .m-score-num {
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 3px
+    }
+
+    .m-score-lbl {
+      font-size: 9px;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: .06em
+    }
+
+    .m-skill-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px
+    }
+
+    .m-skill-grp {
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--r-md);
+      padding: 12px
+    }
+
+    .m-skill-grp h4 {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 7px
+    }
+
+    .m-skill-grp h4.hd {
+      color: var(--c-hard2)
+    }
+
+    .m-skill-grp h4.sd {
+      color: var(--c-soft2)
+    }
+
+    .m-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px
+    }
+
+    .m-chip {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--s3);
+      border: 1px solid var(--bd);
+      color: var(--sub)
+    }
+
+    .m-chip.got {
+      background: rgba(16, 185, 129, .1);
+      border-color: rgba(16, 185, 129, .2);
+      color: var(--green)
+    }
+
+    /* ══════════════════════ TOAST ═════════════════════════════════ */
+    #toast {
+      position: fixed;
+      z-index: 9999;
+      bottom: calc(80px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      padding: 11px 18px;
+      border-radius: var(--r-md);
+      font-size: 13px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+      opacity: 0;
+      transition: all .25s var(--ease);
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 88vw;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1
+    }
+
+    #toast.ok {
+      border-color: rgba(14, 165, 233, .4);
+      color: var(--c-hard2)
+    }
+
+    #toast.err {
+      border-color: rgba(244, 63, 94, .4);
+      color: var(--red)
+    }
+
+    #toast.info {
+      border-color: rgba(236, 72, 153, .4);
+      color: var(--c-soft2)
+    }
+
+    /* spinner */
+    .spin {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      vertical-align: middle;
+      margin-right: 7px;
+      border: 2px solid rgba(248, 250, 252, .4);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spi .65s linear infinite;
+    }
+
+    @keyframes spi {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      right: 18px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: none;
+      z-index: 700;
+      background: linear-gradient(135deg, var(--c-hard), var(--c-soft));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 6px 24px rgba(14, 165, 233, .4);
+      cursor: pointer;
+      transition: transform .17s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .fab:active {
+      transform: scale(.92)
+    }
+
+    .fab-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      padding: 0 4px;
+      background: var(--rose);
+      border: 2px solid var(--bg);
+      font-size: 9px;
+      font-weight: 700;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fab-badge.show {
+      display: flex
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 0 16px;
+      color: var(--dim);
+      font-size: 11px;
+      margin-top: 44px;
+      border-top: 1px solid var(--bd);
+    }
+
+    footer a {
+      color: var(--sub)
+    }
+
+    footer a:hover {
+      color: var(--c-hard2)
+    }
+
+    /* ═════════════════════════ BREAKPOINTS ════════════════════════ */
+    @media(min-width:480px) {
+      .kpi-row {
+        display: flex
+      }
+
+      #toast {
+        bottom: 20px;
+        left: auto;
+        right: 20px;
+        transform: translateY(50px)
+      }
+
+      #toast.show {
+        transform: translateY(0)
+      }
+    }
+
+    @media(min-width:640px) {
+      .m-scores-grid {
+        grid-template-columns: repeat(4, 1fr)
+      }
+
+      .m-skill-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr)
+      }
+
+      .mbg {
+        align-items: center;
+        padding: 20px
+      }
+
+      .modal {
+        border-radius: var(--r-xl);
+        max-width: 660px;
+        padding-bottom: 20px
+      }
+
+      @keyframes mup {
+        from {
+          opacity: 0;
+          transform: scale(.95) translateY(10px)
+        }
+
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0)
+        }
+      }
+
+      .m-handle {
+        display: none
+      }
+    }
+
+    @media(min-width:900px) {
+      .fab {
+        display: none
+      }
+
+      .bd-drop {
+        display: none !important
+      }
+
+      .panel {
+        position: sticky;
+        top: 70px;
+        transform: none !important;
+        border-radius: var(--r-xl);
+        max-height: calc(100vh - 88px);
+        overflow-y: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        z-index: auto;
+        width: var(--sidebar-w);
+        flex-shrink: 0;
+        padding-bottom: 20px;
+      }
+
+      .panel-close {
+        display: none
+      }
+
+      .drag-bar {
+        display: none
+      }
+
+      .panel-hd {
+        justify-content: flex-start
+      }
+
+      .app-layout {
+        grid-template-columns: var(--sidebar-w) 1fr;
+        gap: 22px;
+        align-items: start
+      }
+
+      .sk-inp {
+        font-size: 13px;
+        padding: 10px 10px 10px 34px
+      }
+
+      #toast {
+        bottom: 20px;
+        left: auto;
+        right: 20px;
+        transform: translateY(50px)
+      }
+
+      #toast.show {
+        transform: translateY(0)
+      }
+    }
+
+    @media(min-width:1200px) {
+      :root {
+        --sidebar-w: 380px
+      }
+
+      .wrap {
+        padding: 0 28px
+      }
+
+      .hd {
+        padding: 0 28px
+      }
+    }
+
+    @media(hover:hover) {
+      .jcard:hover {
+        transform: translateY(-2px)
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LOADING OVERLAY -->
+  <div id="overlay">
+    <div class="ov-icon">🎯</div>
+    <div class="ov-title">JobMatch AI</div>
+    <div class="ov-track">
+      <div class="ov-fill" id="ovbar"></div>
+    </div>
+    <div class="ov-msg" id="ovmsg">Initialising…</div>
+    <div class="ov-steps">
+      <div class="ov-step" id="step1"><span class="ico">⏳</span> Loading training data (10,000 users)</div>
+      <div class="ov-step" id="step2"><span class="ico">⏳</span> Building TF-IDF feature matrix</div>
+      <div class="ov-step" id="step3"><span class="ico">⏳</span> Training Random Forest (200 trees)</div>
+      <div class="ov-step" id="step4"><span class="ico">⏳</span> Vectorising job catalogue</div>
+      <div class="ov-step" id="step5"><span class="ico">⏳</span> Evaluating model accuracy</div>
+    </div>
+    <div class="ov-ok" id="ovok">✓ Model ready!</div>
+  </div>
+
+  <div class="page">
+    <!-- HEADER -->
+    <header>
+      <div class="hd">
+        <a class="logo" href="/">
+          <div class="logo-mark">🎯</div>
+          <span class="logo-name">Job<em>Match</em> AI</span>
+        </a>
+        <div class="hd-right">
+          <div class="status-pill">
+            <div class="sdot" id="sdot"></div>
+            <span id="stext">Training…</span>
+          </div>
+          <div class="acc-pill" id="acc-pill">🎯 <span id="acc-val">—</span></div>
+          <div class="kpi-row">
+            <div class="kpi">
+              <div class="kpi-n" id="kpi-u">—</div>
+              <div class="kpi-l">Users</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-n" id="kpi-j">—</div>
+              <div class="kpi-l">Jobs</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-n" id="kpi-h">—</div>
+              <div class="kpi-l">Hard</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-n" id="kpi-s">—</div>
+              <div class="kpi-l">Soft</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MOBILE DRAWER BACKDROP -->
+    <div class="bd-drop" id="bdrop" onclick="closeDrawer()"></div>
+
+    <!-- SIDEBAR PANEL -->
+    <div class="panel" id="panel">
+      <div class="drag-bar"></div>
+      <div class="panel-hd">
+        <div class="panel-title">Build Your Profile</div>
+        <button class="panel-close" onclick="closeDrawer()" aria-label="Close">✕</button>
+      </div>
+
+      <!-- ── SKILL TABS ── -->
+      <div class="skill-tabs">
+        <button class="skill-tab active-hard" id="tab-hard" onclick="switchTab('hard')">
+          ⚙ Hard Skills <span class="tab-count" id="hcount">0</span>
+        </button>
+        <button class="skill-tab" id="tab-soft" onclick="switchTab('soft')">
+          💬 Soft Skills <span class="tab-count" id="scount">0</span>
+        </button>
+      </div>
+
+      <!-- HARD SKILLS PANE -->
+      <div class="skill-pane active" id="pane-hard">
+        <div class="skill-search-wrap skill-search-icon-hard">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="#0ea5e9" stroke-width="2" />
+            <path d="M16.5 16.5L21 21" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input class="sk-inp hard" id="hard-in" type="text" placeholder="Search hard skills…" autocomplete="off"
+            inputmode="text" enterkeyhint="done" />
+          <div class="ac-drop" id="hard-ac"></div>
+        </div>
+        <div class="tags-header">
+          <span class="tags-label">Added skills</span>
+          <button class="clear-btn" onclick="clearAll('hard')">Clear all</button>
+        </div>
+        <div class="tag-area" id="hard-tags"></div>
+        <div class="quick-sec">
+          <div class="quick-label">Popular hard skills</div>
+          <div class="quick-row" id="hard-quick"></div>
+        </div>
+      </div>
+
+      <!-- SOFT SKILLS PANE -->
+      <div class="skill-pane" id="pane-soft">
+        <div class="skill-search-wrap skill-search-icon-soft">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="#ec4899" stroke-width="2" />
+            <path d="M16.5 16.5L21 21" stroke="#ec4899" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input class="sk-inp soft" id="soft-in" type="text" placeholder="Search soft skills…" autocomplete="off"
+            inputmode="text" enterkeyhint="done" />
+          <div class="ac-drop" id="soft-ac"></div>
+        </div>
+        <div class="tags-header">
+          <span class="tags-label">Added skills</span>
+          <button class="clear-btn" onclick="clearAll('soft')">Clear all</button>
+        </div>
+        <div class="tag-area" id="soft-tags"></div>
+        <div class="quick-sec">
+          <div class="quick-label">Popular soft skills</div>
+          <div class="quick-row" id="soft-quick"></div>
+        </div>
+      </div>
+
+      <!-- ── SEARCH OPTIONS ── -->
+      <div class="search-opts">
+        <div class="opts-title">Search Options</div>
+
+        <!-- Experience level -->
+        <div class="exp-row">
+          <div class="exp-label">🎓 Experience Level</div>
+          <div class="seg-ctrl">
+            <button class="seg-opt sel" data-exp="" onclick="setExp(this)">Any</button>
+            <button class="seg-opt" data-exp="entry" onclick="setExp(this)">Entry</button>
+            <button class="seg-opt" data-exp="mid" onclick="setExp(this)">Mid</button>
+            <button class="seg-opt" data-exp="senior" onclick="setExp(this)">Senior</button>
+          </div>
+        </div>
+
+        <!-- Results count -->
+        <div class="count-row">
+          <div class="count-label">
+            <span>📊 Max Results</span>
+            <span class="count-val" id="cnt-val">8</span>
+          </div>
+          <input type="range" id="res-count" min="3" max="11" value="8"
+            oninput="document.getElementById('cnt-val').textContent=this.value" />
+        </div>
+      </div>
+
+      <button class="search-btn" id="cta" disabled onclick="doSearch()">
+        🔍 &nbsp;Find Matching Jobs
+      </button>
+
+      <!-- Model stats -->
+      <div class="model-stats" id="model-stats">
+        <div class="ms-grid">
+          <div class="ms-item">
+            <div class="ms-val" id="ms-acc">—</div>
+            <div class="ms-lbl">RF Accuracy</div>
+          </div>
+          <div class="ms-item">
+            <div class="ms-val" id="ms-users" style="color:var(--c-soft2)">—</div>
+            <div class="ms-lbl">Training Users</div>
+          </div>
+        </div>
+        <div class="ms-row"><span class="ms-key">Algorithm</span><span class="ms-v">Random Forest · 200 trees</span>
+        </div>
+        <div class="ms-row"><span class="ms-key">Features</span><span class="ms-v">TF-IDF · 5,000 ngrams</span></div>
+        <div class="ms-row"><span class="ms-key">Score blend</span><span class="ms-v">60% RF · 40% Cosine</span></div>
+      </div>
+    </div><!-- /panel -->
+
+    <!-- MAIN CONTENT -->
+    <div class="wrap">
+      <div class="hero">
+        <h1>Find Your Best<br />Career Match</h1>
+        <p>Add your technical and interpersonal skills. Our Random Forest model — trained on 10,000 real user profiles —
+          ranks all 11 job fields by fit.</p>
+        <div class="pill-row">
+          <div class="info-pill">📄 jobs_data.csv · 11 categories</div>
+          <div class="info-pill">👥 10,000 training users</div>
+          <div class="info-pill brand">🤖 RF + TF-IDF + Cosine</div>
+        </div>
+      </div>
+
+      <div class="app-layout">
+        <div class="sidebar-slot"></div>
+
+        <section>
+          <div class="res-hdr">
+            <h2>Recommendations</h2>
+            <span class="res-pill" id="rpill">—</span>
+          </div>
+          <div class="sort-bar" id="sortbar">
+            <button class="sort-btn on" data-k="score" onclick="sortBy('score',this)">↑ Blended</button>
+            <button class="sort-btn" data-k="rf" onclick="sortBy('rf',this)">↑ RF Prob</button>
+            <button class="sort-btn" data-k="cos" onclick="sortBy('cos',this)">↑ Cosine</button>
+            <button class="sort-btn" data-k="match" onclick="sortBy('match',this)">↑ Skill Match</button>
+            <button class="sort-btn" data-k="title" onclick="sortBy('title',this)">A–Z</button>
+          </div>
+          <div id="resbox">
+            <div class="empty">
+              <div class="ico">✨</div>
+              <h3>Ready to recommend</h3>
+              <p>Add your skills using the panel, then tap <strong>Find Matching Jobs</strong>.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- METRICS -->
+      <section class="metrics-sec" id="metrics-sec">
+        <div class="metrics-hd">Model Performance</div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="report-wrap">
+          <div class="report-hd">Per-Class Classification Report — Random Forest</div>
+          <div class="table-scroll">
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1-Score</th>
+                  <th>Support</th>
+                  <th>F1 Bar</th>
+                </tr>
+              </thead>
+              <tbody id="report-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="wrap">
+        JobMatch AI &nbsp;·&nbsp; Random Forest + TF-IDF + Cosine Similarity &nbsp;·&nbsp;
+        <a href="https://huggingface.co/datasets/batuhanmtl/job-skill-set" target="_blank">HuggingFace Dataset</a>
+      </div>
+    </footer>
+  </div><!-- /page -->
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="openDrawer()" aria-label="Open filters">
+    ⚙️<div class="fab-badge" id="fab-badge">0</div>
+  </button>
+
+  <!-- MODAL -->
+  <div class="mbg" id="mbg" onclick="maybeClose(event)">
+    <div class="modal" id="modal-inner">
+      <div class="m-handle"></div>
+      <div class="m-hd">
+        <div>
+          <div class="m-title" id="m-title">—</div>
+          <div id="m-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
+        </div>
+        <button class="m-close" onclick="closeModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="m-sec">Score Breakdown</div>
+      <div class="m-scores-grid" id="m-scores"></div>
+      <div class="m-sec">Matched Skills ✓</div>
+      <div class="chips" id="m-matched"></div>
+      <div class="m-sec">Skills to Develop +</div>
+      <div class="chips" id="m-missing"></div>
+      <div class="m-sec">Full Requirements</div>
+      <div class="m-skill-grid" id="m-skill-grid"></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    /* ══════════ STATE ══════════ */
+    const hardSet = new Set(), softSet = new Set();
+    let allResults = [], displayResults = [], curTab = 'hard', expLevel = '';
+
+    const HARD_QUICK = ['python', 'sql', 'excel', 'javascript', 'java', 'data analysis',
+      'financial modeling', 'accounting', 'project management', 'marketing'];
+    const SOFT_QUICK = ['leadership', 'communication', 'teamwork', 'problem solving',
+      'time management', 'customer service', 'management', 'planning'];
+
+    /* ══════════ TAB SWITCHING ══════════ */
+    function switchTab(t) {
+      curTab = t;
+      document.getElementById('pane-hard').classList.toggle('active', t === 'hard');
+      document.getElementById('pane-soft').classList.toggle('active', t === 'soft');
+      document.getElementById('tab-hard').className = 'skill-tab' + (t === 'hard' ? ' active-hard' : '');
+      document.getElementById('tab-soft').className = 'skill-tab' + (t === 'soft' ? ' active-soft' : '');
+    }
+
+    /* ══════════ DRAWER ══════════ */
+    function openDrawer() {
+      document.getElementById('panel').classList.add('open');
+      document.getElementById('bdrop').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+      document.getElementById('panel').classList.remove('open');
+      document.getElementById('bdrop').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    window.addEventListener('resize', () => { if (window.innerWidth >= 900) closeDrawer(); });
+    (() => {
+      const sb = document.getElementById('panel'); let sy = 0;
+      sb.addEventListener('touchstart', e => { sy = e.touches[0].clientY }, { passive: true });
+      sb.addEventListener('touchend', e => { if (e.changedTouches[0].clientY - sy > 80) closeDrawer(); }, { passive: true });
+    })();
+
+    /* ══════════ EXPERIENCE LEVEL ══════════ */
+    function setExp(btn) {
+      document.querySelectorAll('.seg-opt').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      expLevel = btn.dataset.exp;
+    }
+
+    /* ══════════ FAB BADGE ══════════ */
+    function updateBadge() {
+      const n = hardSet.size + softSet.size;
+      const b = document.getElementById('fab-badge');
+      b.textContent = n; b.classList.toggle('show', n > 0);
+      document.getElementById('fab').childNodes[0].textContent = n > 0 ? '🔍' : '⚙️';
+      document.getElementById('hcount').textContent = hardSet.size;
+      document.getElementById('scount').textContent = softSet.size;
+      /* mark quick chips as added */
+      document.querySelectorAll('.qchip').forEach(c => {
+        const type = c.dataset.type, val = c.dataset.val;
+        const set = type === 'hard' ? hardSet : softSet;
+        c.classList.toggle('added', set.has(val));
+      });
+    }
+
+    /* ══════════ TRAINING POLL ══════════ */
+    const STEPS = [
+      { id: 'step1', pct: 15, msg: 'Loading CSV files…' },
+      { id: 'step2', pct: 35, msg: 'Building TF-IDF vocabulary…' },
+      { id: 'step3', pct: 65, msg: 'Training Random Forest…' },
+      { id: 'step4', pct: 85, msg: 'Vectorising job catalogue…' },
+      { id: 'step5', pct: 100, msg: 'Evaluating model…' },
+    ];
+    let stepIdx = 0;
+    function advanceStep() {
+      if (stepIdx >= STEPS.length) return;
+      const s = STEPS[stepIdx];
+      document.getElementById(s.id).classList.add('active');
+      document.getElementById(s.id).querySelector('.ico').textContent = '⚙️';
+      document.getElementById('ovbar').style.width = s.pct + '%';
+      document.getElementById('ovmsg').textContent = s.msg;
+      if (stepIdx > 0) {
+        const p = STEPS[stepIdx - 1], el = document.getElementById(p.id);
+        el.classList.remove('active'); el.classList.add('done');
+        el.querySelector('.ico').textContent = '✓';
+      }
+      stepIdx++;
+    }
+    async function pollStatus() {
+      advanceStep();
+      const iv = setInterval(advanceStep, 3500);
+      while (true) {
+        await sleep(1200);
+        try {
+          const r = await fetch('/api/status'), d = await r.json();
+          if (d.ready) {
+            clearInterval(iv);
+            STEPS.forEach(s => {
+              const el = document.getElementById(s.id);
+              el.classList.remove('active'); el.classList.add('done');
+              el.querySelector('.ico').textContent = '✓';
+            });
+            document.getElementById('ovbar').style.width = '100%';
+            document.getElementById('ovmsg').textContent = `✓ ${d.accuracy}% accuracy — ready!`;
+            document.getElementById('ovok').classList.add('show');
+            onReady(d);
+            setTimeout(() => {
+              const el = document.getElementById('overlay');
+              el.classList.add('bye');
+              setTimeout(() => el.remove(), 700);
+            }, 1400);
+            return;
+          }
+        } catch (e) { }
+      }
+    }
+    function onReady(d) {
+      document.getElementById('kpi-u').textContent = d.users.toLocaleString();
+      document.getElementById('kpi-j').textContent = d.jobs;
+      document.getElementById('kpi-h').textContent = d.hard_skills.toLocaleString();
+      document.getElementById('kpi-s').textContent = d.soft_skills.toLocaleString();
+      document.getElementById('sdot').classList.add('live');
+      document.getElementById('stext').textContent = `Live · ${d.accuracy}% acc`;
+      document.getElementById('acc-pill').classList.add('show');
+      document.getElementById('acc-val').textContent = d.accuracy + '%';
+      document.getElementById('ms-acc').textContent = d.accuracy + '%';
+      document.getElementById('ms-users').textContent = d.users.toLocaleString();
+      document.getElementById('model-stats').classList.add('show');
+      document.getElementById('cta').disabled = false;
+      buildQuickChips();
+      loadMetrics();
+    }
+
+    /* ══════════ METRICS ══════════ */
+    async function loadMetrics() {
+      const r = await fetch('/api/metrics'), d = await r.json();
+      document.getElementById('metrics-sec').classList.add('show');
+      document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card g"><div class="stat-val">${d.accuracy}%</div><div class="stat-lbl">Test Accuracy</div></div>
+    <div class="stat-card y"><div class="stat-val">${d.total_users.toLocaleString()}</div><div class="stat-lbl">Training Users</div></div>
+    <div class="stat-card b"><div class="stat-val">${d.total_hard.toLocaleString()}</div><div class="stat-lbl">Hard Skills</div></div>
+    <div class="stat-card p"><div class="stat-val">${d.total_soft.toLocaleString()}</div><div class="stat-lbl">Soft Skills</div></div>`;
+      document.getElementById('report-body').innerHTML = d.categories.map(cat => {
+        const m = d.rf_report[cat] || {}, f1 = m['f1-score'] || 0;
+        return `<tr>
+      <td>${cat}</td>
+      <td>${((m.precision || 0) * 100).toFixed(1)}%</td>
+      <td>${((m.recall || 0) * 100).toFixed(1)}%</td>
+      <td>${(f1 * 100).toFixed(1)}%</td>
+      <td>${m.support || 0}</td>
+      <td><div class="bar-cell">
+        <div class="mbar" style="width:${Math.round(f1 * 80)}px"></div>
+        <span style="font-size:10px;color:var(--sub)">${(f1 * 100).toFixed(0)}</span>
+      </div></td>
+    </tr>`;
+      }).join('');
+    }
+
+    /* ══════════ AUTOCOMPLETE ══════════ */
+    function makeAC(inputId, dropId, apiPath, type) {
+      const inp = document.getElementById(inputId), drop = document.getElementById(dropId);
+      let items = [], idx = -1;
+      inp.addEventListener('input', async () => {
+        const q = inp.value.trim();
+        if (q.length < 2) { drop.classList.remove('open'); return; }
+        const res = await fetch(`${apiPath}?q=${encodeURIComponent(q)}`);
+        items = await res.json();
+        if (!items.length) { drop.classList.remove('open'); return; }
+        const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        drop.innerHTML = items.map((s, i) => `
+      <div class="ac-row ${type}-row" data-val="${esc(s)}">
+        <span class="ac-icon">${type === 'hard' ? '⚙' : '💬'}</span>
+        ${s.replace(new RegExp(safe, 'gi'), m => `<b>${m}</b>`)}
+      </div>`).join('');
+        idx = -1; drop.classList.add('open');
+      });
+
+      /* Mousedown event delegation fixes the issue where clicking wouldn't register */
+      drop.addEventListener('mousedown', e => {
+        const row = e.target.closest('.ac-row');
+        if (row) {
+          e.preventDefault(); // Prevents input field from losing focus immediately
+          inp.value = row.dataset.val;
+          drop.classList.remove('open');
+          commit();
+        }
+      });
+
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        else if (e.key === 'ArrowDown') { idx = Math.min(idx + 1, items.length - 1); hiAC(); }
+        else if (e.key === 'ArrowUp') { idx = Math.max(idx - 1, -1); hiAC(); }
+        else if (e.key === 'Escape') { drop.classList.remove('open'); }
+      });
+
+      function hiAC() {
+        drop.querySelectorAll('.ac-row').forEach((el, i) => el.classList.toggle('hi', i === idx));
+        if (idx >= 0) inp.value = items[idx];
+      }
+      function commit() {
+        inp.value.split(',').forEach(v => { const s = v.trim().toLowerCase(); if (s) addTag(s, type); });
+        inp.value = ''; drop.classList.remove('open');
+      }
+
+      // Close when clicking somewhere else
+      document.addEventListener('click', e => {
+        if (!e.target.closest(`#${inputId},#${dropId}`)) drop.classList.remove('open');
+      });
+    }
+    makeAC('hard-in', 'hard-ac', '/api/autocomplete/hard', 'hard');
+    makeAC('soft-in', 'soft-ac', '/api/autocomplete/soft', 'soft');
+
+    function addTag(s, type) {
+      const set = type === 'hard' ? hardSet : softSet;
+      const area = type === 'hard' ? 'hard-tags' : 'soft-tags';
+      if (!s || set.has(s)) return;
+      set.add(s);
+      const span = document.createElement('span');
+      span.className = `stag ${type}`;
+      span.innerHTML = `<span class="stag-label">${s}</span><span class="stag-x" onclick="removeTag('${esc(s)}','${type}',this.parentElement)" aria-label="Remove">✕</span>`;
+      document.getElementById(area).appendChild(span);
+      updateBadge();
+      /* auto-switch to correct tab */
+      switchTab(type);
+    }
+    function removeTag(s, type, el) {
+      (type === 'hard' ? hardSet : softSet).delete(s);
+      el.remove(); updateBadge();
+    }
+    function clearAll(type) {
+      const set = type === 'hard' ? hardSet : softSet;
+      set.clear();
+      document.getElementById(type + '-tags').innerHTML = '';
+      updateBadge();
+    }
+
+    function buildQuickChips() {
+      const mk = (list, type) =>
+        list.map(s => `<button class="qchip${type === 'soft' ? ' soft' : ''}" data-type="${type}" data-val="${s}" onclick="addTag('${esc(s)}','${type}')">${s}</button>`).join('');
+      document.getElementById('hard-quick').innerHTML = mk(HARD_QUICK, 'hard');
+      document.getElementById('soft-quick').innerHTML = mk(SOFT_QUICK, 'soft');
+    }
+
+    /* ══════════ SEARCH ══════════ */
+    async function doSearch() {
+      if (!hardSet.size && !softSet.size) { toast('Add at least one skill.', 'err'); return; }
+      const btn = document.getElementById('cta');
+      btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Analysing…';
+      if (window.innerWidth < 900) closeDrawer();
+      try {
+        const r = await fetch('/api/recommend', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            hard_skills: [...hardSet].join(', '),
+            soft_skills: [...softSet].join(', '),
+            experience: expLevel,
+            top_n: parseInt(document.getElementById('res-count').value),
+          })
+        });
+        const d = await r.json();
+        if (!r.ok) { toast(d.error || 'Error', 'err'); return; }
+        allResults = d.results; displayResults = [...allResults];
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('on', b.dataset.k === 'score'));
+        renderCards(displayResults);
+        toast(`${d.total} job categories ranked ✓`, 'ok');
+        if (window.innerWidth < 900)
+          document.getElementById('resbox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) { toast('Network error', 'err'); }
+      finally { btn.disabled = false; btn.innerHTML = '🔍 &nbsp;Find Matching Jobs'; }
+    }
+
+    /* ══════════ SORT ══════════ */
+    function sortBy(k, btn) {
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('on', b === btn));
+      displayResults = [...allResults].sort((a, b) => {
+        if (k === 'score') return b.score - a.score;
+        if (k === 'rf') return b.rf_score - a.rf_score;
+        if (k === 'cos') return b.cos_score - a.cos_score;
+        if (k === 'match') return b.match_pct - a.match_pct;
+        if (k === 'title') return a.category.localeCompare(b.category);
+        return 0;
+      });
+      renderCards(displayResults);
+    }
+
+    /* ══════════ RENDER CARDS ══════════ */
+    function catCls(cat) {
+      const c = cat.toLowerCase();
+      if (c.includes('account')) return 'badge-accounting';
+      if (c.includes('admin')) return 'badge-administration';
+      if (c.includes('advertis')) return 'badge-advertising';
+      if (c.includes('health')) return 'badge-healthcare';
+      if (c.includes('it') || c.includes('tech')) return 'badge-it';
+      if (c.includes('market')) return 'badge-marketing';
+      if (c.includes('recruit')) return 'badge-recruitment';
+      if (c.includes('retail')) return 'badge-retail';
+      if (c.includes('sales')) return 'badge-sales';
+      if (c.includes('sport')) return 'badge-sport';
+      if (c.includes('telecom')) return 'badge-telecomunication';
+      return 'badge-default';
+    }
+
+    /* Re-adjusted the scCol logic to universally use semantic colors (Green, Amber, Red/Dim) for the donut/scores */
+    function scCol(v) { return v >= 60 ? 'var(--green)' : v >= 35 ? 'var(--amber)' : 'var(--dim)'; }
+
+    function donut(score) {
+      const R = 24, C = 2 * Math.PI * R, col = scCol(score), off = C - (score / 100) * C;
+      return `<div class="score-donut">
+    <svg class="donut-svg" width="56" height="56" viewBox="0 0 56 56">
+      <circle class="d-bg" cx="28" cy="28" r="${R}"/>
+      <circle class="d-arc" cx="28" cy="28" r="${R}"
+        stroke="${col}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+    </svg>
+    <div class="d-center">
+      <span class="d-num" style="color:${col}">${Math.round(score)}</span>
+      <span class="d-sub">score</span>
+    </div>
+  </div>`;
+    }
+
+    function renderCards(list) {
+      document.getElementById('rpill').textContent = `${list.length} categor${list.length !== 1 ? 'ies' : 'y'}`;
+      document.getElementById('sortbar').style.display = list.length ? 'flex' : 'none';
+      const box = document.getElementById('resbox');
+      if (!list.length) {
+        box.innerHTML = `<div class="empty"><div class="ico">😕</div><h3>No matches found</h3><p>Try adding more or different skills.</p></div>`;
+        return;
+      }
+      box.innerHTML = list.map((j, i) => {
+        const bc = catCls(j.category), pct = j.match_pct;
+        const bc2 = pct >= 60 ? 'var(--green)' : pct >= 30 ? 'var(--amber)' : 'var(--dim)';
+        const matched = (j.matched_skills || []).slice(0, 6).map(s => `<span class="chip chip-ok">✓ ${s}</span>`).join('');
+        const missing = (j.missing_skills || []).slice(0, 4).map(s => `<span class="chip chip-miss">+ ${s}</span>`).join('');
+        const hl = (j.hard_skills || []).slice(0, 8).map(s => `<span class="sk-pill">${s}</span>`).join('');
+        const sl = (j.soft_skills || []).slice(0, 6).map(s => `<span class="sk-pill">${s}</span>`).join('');
+        return `
+    <div class="jcard" style="animation-delay:${i * 40}ms" onclick="openModal(${i})">
+      <div class="card-rank-badge">#${i + 1}</div>
+      ${donut(j.score)}
+      <div class="card-top">
+        <div class="card-info">
+          <div class="card-title">${j.category}</div>
+          <div class="card-badges"><span class="badge ${bc}">${j.category}</span></div>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="sc-chip"><span class="sl">RF Prob</span><span class="sv" style="color:var(--c-hard2)">${j.rf_score}%</span></div>
+        <div class="sc-chip"><span class="sl">Cosine</span><span class="sv" style="color:var(--c-soft2)">${j.cos_score}%</span></div>
+        <div class="sc-chip"><span class="sl">Blended</span><span class="sv" style="color:${scCol(j.score)}">${j.score}%</span></div>
+      </div>
+      <div class="chips">${matched}${missing}</div>
+      <div class="card-skills">
+        <div class="skill-col"><div class="skill-col-hd h">⚙ Hard Skills</div><div class="skill-tags">${hl}</div></div>
+        <div class="skill-col"><div class="skill-col-hd s">💬 Soft Skills</div><div class="skill-tags">${sl}</div></div>
+      </div>
+      <div class="match-row">
+        <div class="match-bar-wrap">
+          <div class="match-bar-hd"><span>Skill overlap</span><span style="color:${bc2};font-weight:600">${pct}%</span></div>
+          <div class="match-bar"><div class="match-fill" style="width:${pct}%;background:${bc2}"></div></div>
+        </div>
+        <button class="view-btn" onclick="event.stopPropagation();openModal(${i})">Details →</button>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    /* ══════════ MODAL ══════════ */
+    function openModal(idx) {
+      const j = displayResults[idx], bc = catCls(j.category);
+      document.getElementById('m-title').textContent = j.category;
+      document.getElementById('m-badges').innerHTML =
+        `<span class="badge ${bc}">${j.category}</span>
+     <span class="badge badge-default">ID: ${j.job_id}</span>`;
+      document.getElementById('m-scores').innerHTML = `
+    <div class="m-score-box">
+      <div class="m-score-num" style="color:var(--c-hard2)">${j.rf_score}%</div>
+      <div class="m-score-lbl">RF Probability</div>
+    </div>
+    <div class="m-score-box">
+      <div class="m-score-num" style="color:var(--c-soft2)">${j.cos_score}%</div>
+      <div class="m-score-lbl">Cosine Sim</div>
+    </div>
+    <div class="m-score-box">
+      <div class="m-score-num" style="color:${scCol(j.score)}">${j.score}%</div>
+      <div class="m-score-lbl">Blended Score</div>
+    </div>
+    <div class="m-score-box">
+      <div class="m-score-num" style="color:${scCol(j.match_pct)}">${j.match_pct}%</div>
+      <div class="m-score-lbl">Skill Match</div>
+    </div>`;
+      document.getElementById('m-matched').innerHTML =
+        (j.matched_skills || []).map(s => `<span class="chip chip-ok">✓ ${s}</span>`).join('')
+        || '<span style="color:var(--sub);font-size:12px">No direct matches</span>';
+      document.getElementById('m-missing').innerHTML =
+        (j.missing_skills || []).map(s => `<span class="chip chip-miss">+ ${s}</span>`).join('')
+        || '<span style="color:var(--sub);font-size:12px">All matched!</span>';
+      document.getElementById('m-skill-grid').innerHTML = `
+    <div class="m-skill-grp">
+      <h4 class="hd">⚙ Hard Skills (${(j.hard_skills || []).length})</h4>
+      <div class="m-chips">${(j.hard_skills || []).map(s =>
+        `<span class="m-chip ${hardSet.has(s) ? 'got' : ''}">${s}</span>`).join('')}</div>
+    </div>
+    <div class="m-skill-grp">
+      <h4 class="sd">💬 Soft Skills (${(j.soft_skills || []).length})</h4>
+      <div class="m-chips">${(j.soft_skills || []).map(s =>
+          `<span class="m-chip ${softSet.has(s) ? 'got' : ''}">${s}</span>`).join('')}</div>
+    </div>`;
+      document.getElementById('mbg').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function maybeClose(e) { if (e.target === document.getElementById('mbg')) closeModal(); }
+    function closeModal() { document.getElementById('mbg').classList.remove('open'); document.body.style.overflow = ''; }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    (() => {
+      const m = document.getElementById('modal-inner'); let sy = 0;
+      m.addEventListener('touchstart', e => { sy = e.touches[0].clientY; }, { passive: true });
+      m.addEventListener('touchend', e => { if (e.changedTouches[0].clientY - sy > 80) closeModal(); }, { passive: true });
+    })();
+
+    /* ══════════ TOAST ══════════ */
+    function toast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = `show ${type}`;
+      setTimeout(() => t.className = '', 3000);
+    }
+
+    /* ══════════ UTILS ══════════ */
+    const esc = s => String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    /* ══════════ SIDEBAR DOM PLACEMENT ══════════ */
+    function placeSidebar() {
+      const slot = document.querySelector('.sidebar-slot'), sb = document.getElementById('panel');
+      if (window.innerWidth >= 900) { slot.style.display = 'block'; slot.appendChild(sb); }
+      else { if (sb.parentElement !== document.body) document.body.appendChild(sb); slot.style.display = 'none'; }
+    }
+    placeSidebar();
+    window.addEventListener('resize', placeSidebar);
+
+    /* ══════════ BOOT ══════════ */
+    pollStatus();
+  </script>
+</body>
+
+</html>
